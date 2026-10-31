@@ -1,4 +1,4 @@
-name: Build Windows installer
+name: Build Windows installer & publish release
 
 on:
   push:
@@ -25,8 +25,25 @@ jobs:
         run: npx electron-builder --win nsis --publish never
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - uses: actions/upload-artifact@v4
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
         with:
-          name: codepharm-installer
+          name: codepharm-installer-${{ github.sha }}
           path: release/*.exe
           if-no-files-found: error
+      - name: Publish to GitHub Releases (latest tag)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/*.exe
+          generate_release_notes: true
+      - name: Publish rolling release on branch push
+        if: github.ref == 'refs/heads/arena/bb96a786-codepharm'
+        uses: marvinpinto/action-automatic-releases@latest
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          automatic_release_tag: latest
+          title: "CodEPharm — آخرین نسخه (خودکار)"
+          prerelease: false
+          files: |
+            release/*.exe

@@ -71,7 +71,7 @@ const WebDemoBanner: React.FC = () => (
       <span>پیش‌نمایش آنلاین — اطلاعات روی مرورگر ذخیره می‌شود. برای استفادهٔ آفلاین دائمی، نسخهٔ دسکتاپ ویندوز را نصب کنید.</span>
     </div>
     <a
-      href="https://github.com/mhdyhn20/CodEPharm-/releases"
+      href="https://github.com/mhdyhn20/CodEPharm-/releases/tag/latest"
       target="_blank"
       rel="noopener"
       className="bg-white/20 hover:bg-white/30 rounded-lg px-3 py-1 text-xs font-medium whitespace-nowrap transition-colors"
