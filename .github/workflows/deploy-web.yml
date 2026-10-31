@@ -2,11 +2,11 @@ name: Deploy web preview to GitHub Pages
 
 on:
   push:
-    branches: [arena/bb96a786-codepharm]
+    branches: [arena/bb96a786-codepharm, main]
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
@@ -15,10 +15,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -26,7 +23,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - name: Install
+      - name: Install (skip Electron native binaries; web build doesn't need them)
         run: npm install --no-audit --no-fund --ignore-scripts
       - name: Build web
         run: npm run build:web
@@ -34,5 +31,15 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist-web
-      - id: deployment
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    # Deploy to Pages regardless of which branch triggered the build.
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
         uses: actions/deploy-pages@v4
