@@ -9,13 +9,48 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  # Required to enable pages site automatically
+  actions: write
+  metadata: read
+  statuses: read
+  security_events: read
 
 concurrency:
   group: "pages"
   cancel-in-progress: true
 
 jobs:
+  enable-pages:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enable GitHub Pages (GitHub Actions source)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set +e
+          # Try to get existing Pages site; if 404, create it.
+          existing=$(curl -sS -o /tmp/pages.json -w "%{http_code}" \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/${{ github.repository }}/pages)
+          echo "Existing Pages GET: $existing"
+          if [ "$existing" = "404" ]; then
+            curl -sS -X POST \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              https://api.github.com/repos/${{ github.repository }}/pages \
+              -d '{"build_type":"workflows"}'
+          fi
+          # Make sure Pages is not paused
+          curl -sS -X PUT \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/${{ github.repository }}/pages \
+            -d '{"build_type":"workflows"}' || true
+          sleep 5
+
   build:
+    needs: enable-pages
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
