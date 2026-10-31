@@ -34,26 +34,19 @@ jobs:
           name: codepharm-installer-${{ github.sha }}
           path: release/*.exe
           if-no-files-found: error
-      - name: Delete existing 'latest' release (to re-upload)
-        if: github.ref == 'refs/heads/arena/bb96a786-codepharm'
-        uses: dev-drprasad/delete-older-releases@v0.3.2
-        with:
-          keep_latest: 0
-          delete_tag_pattern: latest
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Publish rolling release on branch push
+      - name: Publish rolling release
         if: github.ref == 'refs/heads/arena/bb96a786-codepharm'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
-          name: "CodEPharm — آخرین نسخه"
+          name: "CodEPharm — آخرین نسخه (خودکار)"
           prerelease: false
           body: |
-            این نسخه به‌صورت خودکار از آخرین کد ساخته شده است.
+            این نسخه به‌صورت خودکار از آخرین کامیت ساخته شده است.
 
-            - برای نصب، فایل exe را دانلود و اجرا کنید.
-            - اطلاعات داروخانه در پوشه کاربری شما ذخیره می‌شود و با نصب/حذف برنامه پاک نمی‌شود.
-            - برای تغییرات جدید، کافیست روی این صفحه بروید و نسخه جدید را دانلود کنید.
+            **نصب:** فایل exe پایین را دانلود و اجرا کنید. داده‌های برنامه در پوشه کاربری ذخیره می‌شود و با نصب/حذف پاک نمی‌گردد.
+
+            **پیش‌نمایش آنلاین:** https://mhdyhn20.github.io/CodEPharm-/
           files: release/*.exe
       - name: Publish tagged release
         if: startsWith(github.ref, 'refs/tags/v')
