@@ -1,0 +1,32 @@
+name: Build Windows installer
+
+on:
+  push:
+    branches: [arena/bb96a786-codepharm]
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  build-win:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install
+        run: npm install --no-audit --no-fund
+      - name: Build renderer
+        run: npm run build:renderer
+      - name: Build electron
+        run: npm run build:electron
+      - name: Package installer (NSIS)
+        run: npx electron-builder --win nsis --publish never
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: codepharm-installer
+          path: release/*.exe
+          if-no-files-found: error

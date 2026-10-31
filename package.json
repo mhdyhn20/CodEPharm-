@@ -1,0 +1,96 @@
+{
+  "name": "codepharm",
+  "productName": "کد ای فارم",
+  "productNameEn": "CodEPharm",
+  "version": "1.0.0",
+  "description": "برنامه ای برای راحتی در سفارش دارو",
+  "main": "dist-electron/main.js",
+  "author": "CodEPharm",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -k \"npm:dev:vite\" \"npm:dev:electron\"",
+    "dev:web": "vite",
+    "dev:vite": "vite",
+    "dev:electron": "wait-on http://localhost:5173 && cross-env NODE_ENV=development tsc -p electron/tsconfig.json && electron .",
+    "build:renderer": "tsc -p tsconfig.json && vite build",
+    "build:web": "tsc -p tsconfig.json && cross-env TARGET=web vite build && cp dist-web/index.html dist-web/404.html && touch dist-web/.nojekyll",
+    "build:electron": "tsc -p electron/tsconfig.json && npm run copy:wasm",
+    "copy:wasm": "node -e \"require('fs').copyFileSync('node_modules/sql.js/dist/sql-wasm.wasm','dist-electron/sql-wasm.wasm')\"",
+    "build": "npm run build:renderer && npm run build:electron",
+    "pack": "npm run build && electron-builder --dir",
+    "dist": "npm run build && electron-builder --win nsis",
+    "dist:all": "npm run build && electron-builder -mwl",
+    "lint": "tsc -p tsconfig.json --noEmit && tsc -p electron/tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "sql.js": "^1.11.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.4",
+    "@types/react": "^18.3.11",
+    "@types/react-dom": "^18.3.0",
+    "@types/sql.js": "^1.4.9",
+    "@vitejs/plugin-react": "^4.3.2",
+    "autoprefixer": "^10.4.20",
+    "concurrently": "^9.0.1",
+    "cross-env": "^7.0.3",
+    "electron": "^32.1.2",
+    "electron-builder": "^25.0.5",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.13",
+    "typescript": "^5.6.2",
+    "vite": "^5.4.8",
+    "vitest": "^2.1.2",
+    "wait-on": "^8.0.1"
+  },
+  "build": {
+    "appId": "com.codepharm.app",
+    "productName": "CodEPharm",
+    "copyright": "Copyright © 2026 CodEPharm",
+    "asar": true,
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "assets/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "assets/fonts",
+        "to": "assets/fonts",
+        "filter": ["**/*"]
+      },
+      {
+        "from": "dist-electron/sql-wasm.wasm",
+        "to": "sql-wasm.wasm"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "CodEPharm",
+      "uninstallDisplayName": "CodEPharm",
+      "deleteAppDataOnUninstall": false
+    }
+  }
+}
