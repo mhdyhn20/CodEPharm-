@@ -44,7 +44,8 @@ export const LoginPage: React.FC = () => {
         await refreshHasAnyUser();
         await login(username.trim(), password);
       } else {
-        toast.show('ساخت حساب ناموفق بود. شاید نام کاربری تکراری باشد.', 'error');
+        console.error('[LoginPage] createAdmin returned false; localStorage keys:', Object.keys(localStorage));
+        toast.show('ساخت حساب ناموفق بود. لطفاً روی «ریست دمو» کلیک کرده و دوباره تلاش کنید.', 'error');
       }
     } else {
       const v = validateLogin(username, password);

@@ -86,9 +86,13 @@ const webApi: Api = {
   async hasAnyUser() {
     try { return load().users.length > 0; } catch { return false; }
   },
-  async createAdmin(input) {
+  async createAdmin(...args: any[]) {
     try {
-      const { username, password } = input as any;
+      // Accept either (input) object or (username, password) positional args
+      let username: string, password: string;
+      if (args.length === 1 && typeof args[0] === 'object') ({ username, password } = args[0] as { username: string; password: string });
+      else [username, password] = args as [string, string];
+      if (!username || !password) return { ok: false, error: 'missing' };
       const db = load();
       if (db.users.find(u => u.username === username.trim())) return { ok: false, error: 'duplicate' };
       const salt = saltHex();
@@ -96,28 +100,34 @@ const webApi: Api = {
       const user: UserRec = { id: db.nextUserId++, username: username.trim(), password_hash: hash, salt };
       db.users.push(user);
       save(db);
+      console.log('[webApi] admin created:', user.username);
       return { ok: true };
     } catch (e: any) {
       console.error('[webApi] createAdmin failed', e);
       return { ok: false, error: e?.message || 'unknown' };
     }
   },
-  async login(input) {
+  async login(...args: any[]) {
     try {
-      const { username, password } = input as any;
+      let username: string, password: string;
+      if (args.length === 1 && typeof args[0] === 'object') ({ username, password } = args[0] as { username: string; password: string });
+      else [username, password] = args as [string, string];
+      if (!username || !password) return { ok: false as const, error: 'invalid' };
       const db = load();
       const u = db.users.find(x => x.username === username.trim());
       if (!u) return { ok: false as const, error: 'invalid' };
       const h = await sha256Hex(u.salt + password);
       if (h !== u.password_hash) return { ok: false as const, error: 'invalid' };
+      console.log('[webApi] login ok:', u.username);
       return { ok: true as const, user: { id: u.id, username: u.username } };
     } catch (e: any) {
       console.error('[webApi] login failed', e);
       return { ok: false as const, error: e?.message || 'unknown' };
     }
   },
-  async createPatient(input) {
-    const { full_name, phone, address } = input as any;
+  async createPatient(...args: any[]) {
+    const input = (args.length === 1 ? args[0] : { full_name: args[0], phone: args[1], address: args[2] }) as { full_name: string; phone: string; address: string };
+    const { full_name, phone, address } = input;
     const db = load();
     const now = nowIso();
     const p: PatientRec = {
@@ -163,12 +173,16 @@ const webApi: Api = {
     return db.patients.filter(p => normalizeStr(p.full_name).includes(nq) || p.phone.includes(digitsOnly))
       .sort((a,b) => b.subscription_code - a.subscription_code);
   },
-  async phoneExists(input) {
-    const { phone, excludeId } = input as any;
+  async phoneExists(...args: any[]) {
+    let phone: string, excludeId: number | undefined;
+    if (args.length === 1 && typeof args[0] === 'object') ({ phone, excludeId } = args[0] as { phone: string; excludeId?: number });
+    else [phone, excludeId] = args as [string, number | undefined];
     return load().patients.some(p => p.phone === phone && p.id !== excludeId);
   },
-  async listPatients(input) {
-    const { page, perPage, query } = input as any;
+  async listPatients(...args: any[]) {
+    let page: number, perPage: number, query: string;
+    if (args.length === 1 && typeof args[0] === 'object') ({ page, perPage, query } = args[0] as { page: number; perPage: number; query: string });
+    else [page, perPage, query] = args as [number, number, string];
     const db = load();
     const q = (query || '').trim();
     const offset = (page - 1) * perPage;
@@ -191,8 +205,10 @@ const webApi: Api = {
       return { pharmacy_name: 'داروخانه', paper_size: 'A5', sidebar_collapsed: false };
     }
   },
-  async setSetting(input) {
-    const { key, value } = input as any;
+  async setSetting(...args: any[]) {
+    let key: string, value: string;
+    if (args.length === 1 && typeof args[0] === 'object') ({ key, value } = args[0] as { key: string; value: string });
+    else [key, value] = args as [string, string];
     const cur = await webApi.getSettings();
     const next = { ...cur, [key]: value === 'true' ? true : value === 'false' ? false : value };
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(next));
