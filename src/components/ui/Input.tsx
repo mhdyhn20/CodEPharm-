@@ -21,14 +21,14 @@ export const Input = forwardRef<HTMLInputElement, Props>(function Input(
       {label && <span className="label-base">{label}</span>}
       <span className="relative block">
         {icon && (
-          <span className="absolute inset-y-0 right-4 flex items-center text-ink-faint pointer-events-none">
+          <span className="absolute inset-y-0 end-3 flex items-center text-ink-faint pointer-events-none">
             {icon}
           </span>
         )}
         <input
           ref={ref}
           type={realType}
-          className={`input-base ${icon ? 'pr-11' : ''} ${error ? 'border-danger focus:border-danger' : ''} ${className}`}
+          className={`input-base ${icon ? 'pe-12' : ''} ${isPassword ? 'ps-10' : ''} ${error ? 'border-danger focus:border-danger' : ''} ${className}`}
           {...rest}
         />
         {isPassword && (
@@ -36,7 +36,7 @@ export const Input = forwardRef<HTMLInputElement, Props>(function Input(
             type="button"
             onClick={() => setShowPassword(v => !v)}
             tabIndex={-1}
-            className="absolute inset-y-0 left-3 flex items-center text-ink-muted hover:text-brand transition-colors px-2"
+            className="absolute inset-y-0 start-0 flex items-center text-ink-muted hover:text-brand transition-colors ps-2 pe-2"
             aria-label={showPassword ? 'پنهان کردن رمز' : 'نمایش رمز'}
           >
             {showPassword ? (
