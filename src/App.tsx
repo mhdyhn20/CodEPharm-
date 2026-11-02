@@ -30,7 +30,7 @@ const Shell: React.FC = () => {
   };
 
   const handleLogout = () => {
-    if (confirm(STR.auth.logoutConfirm)) {
+    if (window.confirm(STR.auth.logoutConfirm)) {
       logout();
       toast.show('خارج شدید.', 'info');
     }

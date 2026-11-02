@@ -158,18 +158,22 @@ const webApi: Api = {
     const pid = typeof id === 'object' ? (id as any).id : id;
     return load().patients.find(p => p.id === pid) ?? null;
   },
-  async searchPatients(input) {
-    const query = (typeof input === 'string' ? input : (input as any).query) as string;
-    const q = (query || '').trim();
-    if (!q) return [];
+  async searchPatients(...args: any[]) {
+    let query: string = args.length === 1 && typeof args[0] !== 'object' ? args[0]
+      : args.length === 1 ? (args[0] as any).query ?? '' : '';
+    query = (query || '').trim();
+    if (!query) return [];
+    // Normalize Arabic/Persian digits to ASCII so users can type Persian digits and still match.
+    const asciiQ = query.replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d).toString())
+                       .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d).toString());
     const db = load();
-    const digitsOnly = q.replace(/\D/g, '');
+    const digitsOnly = asciiQ.replace(/\D/g, '');
     if (/^\d+$/.test(digitsOnly)) {
       const code = parseInt(digitsOnly, 10);
       const found = db.patients.filter(p => p.subscription_code === code);
       if (found.length) return found;
     }
-    const nq = normalizeStr(q);
+    const nq = normalizeStr(asciiQ);
     return db.patients.filter(p => normalizeStr(p.full_name).includes(nq) || p.phone.includes(digitsOnly))
       .sort((a,b) => b.subscription_code - a.subscription_code);
   },
@@ -184,13 +188,16 @@ const webApi: Api = {
     if (args.length === 1 && typeof args[0] === 'object') ({ page, perPage, query } = args[0] as { page: number; perPage: number; query: string });
     else [page, perPage, query] = args as [number, number, string];
     const db = load();
-    const q = (query || '').trim();
+    const raw = (query || '').trim();
+    // Normalize Persian/Arabic digits to ASCII for filter matching.
+    const q = raw.replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d).toString())
+                 .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d).toString());
     const offset = (page - 1) * perPage;
     let items = db.patients.slice().sort((a,b) => b.subscription_code - a.subscription_code);
     if (q) {
       const nq = normalizeStr(q);
       const digitsOnly = q.replace(/\D/g, '');
-      items = items.filter(p => normalizeStr(p.full_name).includes(nq) || p.phone.includes(q) || String(p.subscription_code).includes(digitsOnly));
+      items = items.filter(p => normalizeStr(p.full_name).includes(nq) || p.phone.includes(q) || p.phone.includes(digitsOnly) || String(p.subscription_code).includes(digitsOnly));
     }
     const total = items.length;
     return { rows: items.slice(offset, offset + perPage), total, page, perPage, totalPages: Math.max(1, Math.ceil(total / perPage)) };

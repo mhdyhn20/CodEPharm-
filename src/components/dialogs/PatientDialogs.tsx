@@ -7,6 +7,7 @@ import { STR } from '@/constants/strings';
 import { toPersianDigits } from '@/lib/digits';
 import { formatJalali } from '@/lib/jalali';
 import { normalizePhone, validatePatient } from '@/lib/validation';
+import { numericInput } from '@/lib/digits';
 import type { Patient } from '@/types';
 
 interface InfoProps {
@@ -121,12 +122,13 @@ export const EditPatientDialog: React.FC<EditProps> = ({ open, patient, onClose,
         <Input
           label={STR.create.phone}
           value={phone}
-          onChange={e => setPhone(e.target.value)}
+          onChange={numericInput(v => { setPhone(v); setPhoneWarn(''); })}
           onBlur={handlePhoneBlur}
           placeholder={STR.create.phonePlaceholder}
           error={errors.phone}
           hint={phoneWarn}
           inputMode="numeric"
+          dir="ltr"
         />
         <Textarea
           label={STR.create.address}

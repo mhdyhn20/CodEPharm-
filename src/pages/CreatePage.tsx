@@ -4,6 +4,7 @@ import Textarea from '@/components/ui/Textarea';
 import Button from '@/components/ui/Button';
 import { STR } from '@/constants/strings';
 import { normalizePhone, validatePatient } from '@/lib/validation';
+import { numericInput } from '@/lib/digits';
 import { SuccessDialog } from '@/components/dialogs/PatientDialogs';
 import type { Patient } from '@/types';
 import { useApp } from '@/context/AppContext';
@@ -93,12 +94,13 @@ export const CreatePage: React.FC = () => {
         <Input
           label={STR.create.phone}
           value={phone}
-          onChange={e => setPhone(e.target.value)}
+          onChange={numericInput(v => { setPhone(v); setPhoneWarn(''); })}
           onBlur={handlePhoneBlur}
           placeholder={STR.create.phonePlaceholder}
           error={errors.phone}
           hint={phoneWarn}
           inputMode="numeric"
+          dir="ltr"
         />
         <Textarea
           label={STR.create.address}

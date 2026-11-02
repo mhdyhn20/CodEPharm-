@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import Input from '@/components/ui/Input';
 import Pagination from '@/components/ui/Pagination';
 import { STR } from '@/constants/strings';
-import { toPersianDigits } from '@/lib/digits';
+import { toPersianDigits, numericInput } from '@/lib/digits';
 import { PatientInfoDialog, EditPatientDialog } from '@/components/dialogs/PatientDialogs';
 import type { Patient, PaginatedPatients } from '@/types';
 import { useApp } from '@/context/AppContext';
@@ -76,7 +76,7 @@ export const AllCustomersPage: React.FC = () => {
           <div className="flex-1">
             <Input
               value={query}
-              onChange={e => setQuery(e.target.value)}
+              onChange={numericInput(setQuery)}
               placeholder={STR.all.searchPlaceholder}
               icon={
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">

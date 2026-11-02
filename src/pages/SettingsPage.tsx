@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import { STR } from '@/constants/strings';
@@ -11,6 +11,11 @@ export const SettingsPage: React.FC = () => {
   const [name, setName] = useState(settings.pharmacy_name);
   const [busyBackup, setBusyBackup] = useState(false);
   const [busyRestore, setBusyRestore] = useState(false);
+
+  // Sync input if settings load/change externally (e.g., first run)
+  useEffect(() => {
+    setName(settings.pharmacy_name);
+  }, [settings.pharmacy_name]);
 
   const saveName = () => {
     updateSettings({ pharmacy_name: name.trim() || 'داروخانه' });
@@ -31,7 +36,7 @@ export const SettingsPage: React.FC = () => {
   };
 
   const doRestore = async () => {
-    if (!confirm(STR.settings.restoreWarn)) return;
+    if (!window.confirm(STR.settings.restoreWarn)) return;
     setBusyRestore(true);
     const r = await window.api.restore();
     setBusyRestore(false);

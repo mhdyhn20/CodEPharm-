@@ -3,7 +3,7 @@ import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import { STR } from '@/constants/strings';
 import { toPersianDigits } from '@/lib/digits';
-import { toEnglishDigits } from '@/lib/digits';
+import { toEnglishDigits, numericInput } from '@/lib/digits';
 import { PatientInfoDialog, EditPatientDialog } from '@/components/dialogs/PatientDialogs';
 import type { Patient } from '@/types';
 import { useApp } from '@/context/AppContext';
@@ -83,7 +83,7 @@ export const HomePage: React.FC<Props> = () => {
           <Input
             ref={inputRef}
             value={q}
-            onChange={e => { setQ(e.target.value); setEmpty(false); setResults(null); }}
+            onChange={numericInput(v => { setQ(v); setEmpty(false); setResults(null); })}
             placeholder={STR.home.searchPlaceholder}
             icon={
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">

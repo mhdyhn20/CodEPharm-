@@ -22,17 +22,27 @@ export const Dialog: React.FC<Props> = ({
   closeOnEsc = true,
 }) => {
   const dialogRef = useRef<HTMLDivElement>(null);
+  const prevOverflow = useRef<string>('');
 
   useEffect(() => {
     if (!open) return;
+    // Prevent body scroll while modal is open
+    prevOverflow.current = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
     const onKey = (e: KeyboardEvent) => {
       if (closeOnEsc && e.key === 'Escape') onClose();
     };
     window.addEventListener('keydown', onKey);
-    // Focus first focusable element
-    const el = dialogRef.current?.querySelector<HTMLElement>('button, input, textarea, [tabindex]:not([tabindex="-1"])');
-    el?.focus();
-    return () => window.removeEventListener('keydown', onKey);
+    // Focus first focusable element (next tick so refs inside children are ready)
+    const t = setTimeout(() => {
+      const el = dialogRef.current?.querySelector<HTMLElement>('button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])');
+      el?.focus();
+    }, 20);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      clearTimeout(t);
+      document.body.style.overflow = prevOverflow.current;
+    };
   }, [open, onClose, closeOnEsc]);
 
   if (!open) return null;

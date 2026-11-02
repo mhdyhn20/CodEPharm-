@@ -29,3 +29,14 @@ export function toEnglishDigits(input: string): string {
   }
   return out;
 }
+
+/**
+ * Returns a React onChange handler that keeps a text field's value in English digits
+ * by converting Persian/Arabic digits on input. Usage:
+ *   <Input onChange={numericInput(setPhone)} ... />
+ */
+export function numericInput(setter: (v: string) => void) {
+  return (e: { target: { value: string } }) => {
+    setter(toEnglishDigits(e.target.value));
+  };
+}
