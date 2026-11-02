@@ -14,7 +14,7 @@ export const LoginPage: React.FC = () => {
   const [mode, setMode] = useState<'login' | 'createAdmin'>('login');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [confirm, setConfirm] = useState('');
+  const [confirmPwd, setConfirmPwd] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
 
@@ -29,9 +29,11 @@ export const LoginPage: React.FC = () => {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setErrors({});
+    try {
     if (mode === 'createAdmin') {
-      const v = validateCreateAdmin(username, password, confirm);
+      const v = validateCreateAdmin(username, password, confirmPwd);
       setErrors(v.errors);
       if (!v.valid) return;
       setLoading(true);
@@ -39,6 +41,7 @@ export const LoginPage: React.FC = () => {
       setLoading(false);
       if (ok) {
         toast.show('حساب کاربری مدیر ساخته شد. خوش آمدید!', 'success');
+        await refreshHasAnyUser();
         await login(username.trim(), password);
       } else {
         toast.show('ساخت حساب ناموفق بود. شاید نام کاربری تکراری باشد.', 'error');
@@ -53,6 +56,11 @@ export const LoginPage: React.FC = () => {
       if (!ok) {
         setErrors({ password: STR.auth.invalidLogin });
       }
+    }
+    } catch (err: any) {
+      setLoading(false);
+      console.error('submit failed', err);
+      toast.show('خطا در برقراری ارتباط. لطفاً صفحه را رفرش کنید. ' + (err?.message || ''), 'error');
     }
   };
 
@@ -120,8 +128,8 @@ export const LoginPage: React.FC = () => {
                   label={STR.auth.confirmPassword}
                   type="password"
                   autoComplete="new-password"
-                  value={confirm}
-                  onChange={e => setConfirm(e.target.value)}
+                  value={confirmPwd}
+                  onChange={e => setConfirmPwd(e.target.value)}
                   placeholder={STR.auth.passwordPlaceholder}
                   error={errors.confirmPassword}
                 />
@@ -134,6 +142,22 @@ export const LoginPage: React.FC = () => {
           <div className="text-center text-xs text-ink-muted mt-5">
             {STR.appName} — نسخه ۱.۰.۰
           </div>
+          {!(window as any).process?.versions?.electron && (
+            <div className="text-center mt-3">
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.confirm('با این کار تمام اطلاعات ذخیره‌شده در مرورگر (حساب کاربری و بیماران) پاک می‌شود. ادامه می‌دهید؟')) {
+                    localStorage.clear();
+                    location.reload();
+                  }
+                }}
+                className="text-xs text-ink-faint hover:text-danger transition-colors"
+              >
+                ریست دمو (پاک‌سازی اطلاعات)
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
