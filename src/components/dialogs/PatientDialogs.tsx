@@ -9,6 +9,7 @@ import { formatJalali } from '@/lib/jalali';
 import { normalizePhone, validatePatient } from '@/lib/validation';
 import { numericInput } from '@/lib/digits';
 import type { Patient } from '@/types';
+import { useToast } from '@/components/ui/Toast';
 
 interface InfoProps {
   open: boolean;
@@ -19,14 +20,41 @@ interface InfoProps {
 }
 
 export const PatientInfoDialog: React.FC<InfoProps> = ({ open, patient, onClose, onEdit, onPrint }) => {
+  const toast = useToast();
+  const copyCode = async () => {
+    if (!patient) return;
+    try {
+      await navigator.clipboard.writeText(String(patient.subscription_code));
+      toast.show('کد اشتراک کپی شد.', 'success');
+    } catch {
+      // Fallback
+      const el = document.createElement('textarea');
+      el.value = String(patient.subscription_code);
+      document.body.appendChild(el); el.select();
+      try { document.execCommand('copy'); toast.show('کد اشتراک کپی شد.', 'success'); } catch { toast.show('کپی ناموفق بود.', 'error'); }
+      el.remove();
+    }
+  };
   if (!patient) return null;
   return (
     <Dialog open={open} onClose={onClose} title={STR.patient.infoTitle}>
       <div className="space-y-4">
         <div className="flex justify-center py-3">
-          <div className="bg-brand-50 border-2 border-brand/20 rounded-2xl px-8 py-4 text-center">
+          <div className="relative bg-brand-50 border-2 border-brand/20 rounded-2xl px-8 py-4 text-center group">
             <div className="text-xs text-ink-muted mb-1">{STR.patient.code}</div>
             <div className="text-4xl font-bold text-brand tracking-widest">{toPersianDigits(patient.subscription_code)}</div>
+            <button
+              type="button"
+              onClick={copyCode}
+              title="کپی کد"
+              aria-label="کپی کد اشتراک"
+              className="absolute -top-2 -left-2 w-8 h-8 rounded-full bg-white shadow-md border border-surface-border text-ink-muted hover:text-brand hover:border-brand flex items-center justify-center transition-colors opacity-70 hover:opacity-100"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" strokeLinejoin="round" />
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
           </div>
         </div>
         <InfoRow label={STR.patient.name} value={patient.full_name} />

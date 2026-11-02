@@ -212,6 +212,17 @@ const webApi: Api = {
       return { pharmacy_name: 'داروخانه', paper_size: 'A5', sidebar_collapsed: false };
     }
   },
+  async stats() {
+    const db = load();
+    const last = db.patients[0] ?? null;
+    return {
+      total: db.patients.length,
+      nextCode: db.nextCode,
+      lastCode: last?.subscription_code ?? 0,
+      lastCreatedAt: last?.created_at ?? null,
+      lastPatient: last ? { full_name: last.full_name, code: last.subscription_code } : null,
+    };
+  },
   async setSetting(...args: any[]) {
     let key: string, value: string;
     if (args.length === 1 && typeof args[0] === 'object') ({ key, value } = args[0] as { key: string; value: string });

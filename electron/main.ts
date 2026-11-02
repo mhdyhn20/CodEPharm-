@@ -204,6 +204,20 @@ function registerIpc() {
     return { rows, total, page, perPage, totalPages: Math.max(1, Math.ceil(total / perPage)) };
   });
 
+  ipcMain.handle('patients:stats', async () => {
+    const db = await getDb();
+    const total = scalar<number>(db, 'SELECT COUNT(*) as c FROM patients') ?? 0;
+    const nextCode = parseInt(String(scalar(db, "SELECT value FROM settings WHERE key='next_subscription_code'") ?? '101'), 10);
+    const last = one(db, 'SELECT subscription_code, full_name, created_at FROM patients ORDER BY subscription_code DESC LIMIT 1') as any;
+    return {
+      total,
+      nextCode,
+      lastCode: last?.subscription_code ?? 0,
+      lastCreatedAt: last?.created_at ?? null,
+      lastPatient: last ? { full_name: last.full_name, code: last.subscription_code } : null,
+    };
+  });
+
   // --- Settings ---
   ipcMain.handle('settings:get', async () => {
     const db = await getDb();

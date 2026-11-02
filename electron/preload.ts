@@ -18,6 +18,7 @@ const api = {
     ipcRenderer.invoke('patients:list', { page, perPage, query }),
   phoneExists: (phone: string, excludeId?: number) =>
     ipcRenderer.invoke('patients:phoneExists', { phone, excludeId }),
+  stats: () => ipcRenderer.invoke('patients:stats'),
 
   // Settings
   getSettings: () => ipcRenderer.invoke('settings:get'),

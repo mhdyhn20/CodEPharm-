@@ -1,0 +1,21 @@
+{
+  "name": "کد ای فارم — CodEPharm",
+  "short_name": "کد ای فارم",
+  "description": "مدیریت مشترکان داروخانه — آفلاین، سریع و امن",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "direction": "rtl",
+  "lang": "fa",
+  "background_color": "#F5F8FA",
+  "theme_color": "#0E6E73",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
