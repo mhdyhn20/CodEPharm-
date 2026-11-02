@@ -33,6 +33,9 @@ export const PatientInfoDialog: React.FC<InfoProps> = ({ open, patient, onClose,
         <InfoRow label={STR.patient.phone} value={toPersianDigits(patient.phone)} />
         <InfoRow label={STR.patient.address} value={patient.address || '—'} multiline />
         <InfoRow label={STR.patient.createdAt} value={toPersianDigits(formatJalali(patient.created_at))} />
+        {patient.updated_at && patient.updated_at !== patient.created_at && (
+          <InfoRow label={STR.patient.updatedAt} value={toPersianDigits(formatJalali(patient.updated_at))} />
+        )}
       </div>
       <div className="flex justify-end gap-2 mt-6 pt-4 border-t border-surface-border">
         <Button variant="secondary" onClick={onPrint}>

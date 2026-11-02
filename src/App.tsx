@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import { ToastProvider, useToast } from './components/ui/Toast';
 import LoginPage from './pages/LoginPage';
@@ -28,6 +28,29 @@ const Shell: React.FC = () => {
     setCollapsed(next);
     updateSettings({ sidebar_collapsed: next });
   };
+
+  // Global keyboard shortcuts
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const typing = target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable);
+      if (e.ctrlKey || e.metaKey) {
+        const k = e.key.toLowerCase();
+        if (k === 'n') { e.preventDefault(); setPage('create'); }
+        else if (k === 'k' || k === 'f') {
+          e.preventDefault();
+          setPage('home');
+          // Tell the HomePage to focus the search box on next tick
+          setTimeout(() => window.dispatchEvent(new CustomEvent('cp:focus-search')), 50);
+        }
+        else if (k === 'l') { e.preventDefault(); setPage('all'); }
+        return;
+      }
+      if (e.key === 'Escape' && typing) (target as HTMLInputElement).blur();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   const handleLogout = () => {
     if (window.confirm(STR.auth.logoutConfirm)) {

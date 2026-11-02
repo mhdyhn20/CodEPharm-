@@ -80,7 +80,8 @@ const items: NavItem[] = [
 export const Sidebar: React.FC<Props> = ({ current, onNavigate, onLogout, collapsed, onToggleCollapsed }) => {
   return (
     <aside
-      className={`flex flex-col bg-gradient-to-b from-brand to-brand-700 text-white transition-all duration-300 rounded-l-3xl shadow-float m-3 ml-0 ${
+      style={{ marginInlineEnd: 0 }}
+      className={`flex flex-col bg-gradient-to-b from-brand to-brand-700 text-white transition-all duration-300 shadow-float m-3 rounded-3xl rounded-s-none ${
         collapsed ? 'w-[78px]' : 'w-[250px]'
       }`}
     >

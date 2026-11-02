@@ -28,6 +28,9 @@ export const HomePage: React.FC<Props> = () => {
 
   useEffect(() => {
     inputRef.current?.focus();
+    const onFocusSearch = () => setTimeout(() => inputRef.current?.focus(), 10);
+    window.addEventListener('cp:focus-search', onFocusSearch as EventListener);
+    return () => window.removeEventListener('cp:focus-search', onFocusSearch as EventListener);
   }, []);
 
   const handleSearch = async (e?: React.FormEvent) => {
@@ -92,8 +95,19 @@ export const HomePage: React.FC<Props> = () => {
               </svg>
             }
           />
-          <div className="flex justify-start">
+          <div className="flex items-center justify-between flex-wrap gap-3">
             <Button type="submit" loading={loading}>{STR.common.confirm}</Button>
+            <div className="flex items-center gap-2 text-[11px] text-ink-faint" dir="ltr">
+              <kbd className="px-1.5 py-0.5 rounded bg-surface-muted border border-surface-border text-ink-muted text-[10px] font-mono">Ctrl</kbd>
+              <span>+</span>
+              <kbd className="px-1.5 py-0.5 rounded bg-surface-muted border border-surface-border text-ink-muted text-[10px] font-mono">K</kbd>
+              <span className="ms-2">جستجو</span>
+              <span className="mx-2">·</span>
+              <kbd className="px-1.5 py-0.5 rounded bg-surface-muted border border-surface-border text-ink-muted text-[10px] font-mono">Ctrl</kbd>
+              <span>+</span>
+              <kbd className="px-1.5 py-0.5 rounded bg-surface-muted border border-surface-border text-ink-muted text-[10px] font-mono">N</kbd>
+              <span className="ms-2">ثبت جدید</span>
+            </div>
           </div>
         </form>
 

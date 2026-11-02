@@ -223,11 +223,18 @@ const webApi: Api = {
   },
   async backup() {
     const db = load();
-    const blob = new Blob([JSON.stringify(db, null, 2)], { type: 'application/json' });
+    const payload = {
+      __app: 'CodEPharm',
+      __version: 1,
+      __exportedAt: new Date().toISOString(),
+      ...db,
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `codepharm-backup-${new Date().toISOString().slice(0,10)}.json`;
+    const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    a.download = `codepharm-backup-${ts}.json`;
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 2000);
     return { ok: true, path: a.download };
@@ -243,8 +250,16 @@ const webApi: Api = {
         const reader = new FileReader();
         reader.onload = () => {
           try {
-            const obj = JSON.parse(String(reader.result));
-            save(obj as DB);
+            const raw = JSON.parse(String(reader.result));
+            // Support wrapped backup file (has __app key) or raw DB
+            const obj: DB = raw?.__app === 'CodEPharm'
+              ? { users: raw.users ?? [], patients: raw.patients ?? [],
+                  nextCode: raw.nextCode ?? 101, nextUserId: raw.nextUserId ?? 1, nextPatientId: raw.nextPatientId ?? 1 }
+              : raw;
+            if (!Array.isArray(obj.users) || !Array.isArray(obj.patients)) {
+              return resolve({ ok: false, error: 'invalid' });
+            }
+            save(obj);
             location.reload();
             resolve({ ok: true });
           } catch { resolve({ ok: false, error: 'invalid' }); }
@@ -257,23 +272,47 @@ const webApi: Api = {
   async printPatient(data) {
     try {
       const isThermal = data.paperSize === 'thermal80';
+      // Collect stylesheets and font-face rules from the parent document so the
+      // popup inherits Vazirmatn and any other loaded fonts without hard-coding hashes.
+      const fontCss: string[] = [];
+      try {
+        for (let i = 0; i < document.styleSheets.length; i++) {
+          const sheet = document.styleSheets[i] as CSSStyleSheet;
+          try {
+            const rules = sheet.cssRules || [];
+            for (let j = 0; j < rules.length; j++) {
+              const r = rules[j];
+              if (r.type === CSSRule.FONT_FACE_RULE) fontCss.push(r.cssText);
+            }
+          } catch { /* cross-origin sheet: skip */ }
+        }
+      } catch {}
+      // Fallback system font stack if no @font-face was found (e.g., Vazirmatn failed to load)
+      const fontFamily = fontCss.length ? 'Vazirmatn,Tahoma,sans-serif' : 'Tahoma,Arial,sans-serif';
       const css = isThermal
-        ? `@page{size:80mm auto;margin:4mm;}body{font-family:Vazirmatn,Tahoma,sans-serif;direction:rtl;width:72mm;padding:4mm;font-size:11pt;}.ph{text-align:center;font-weight:bold;font-size:13pt;margin-bottom:6mm;}.code{text-align:center;font-size:32pt;font-weight:bold;color:#0E6E73;margin:4mm 0;letter-spacing:2pt;}.row{display:flex;justify-content:space-between;margin:2mm 0;border-bottom:1px dashed #999;padding-bottom:1mm;}.lbl{color:#555;font-size:10pt;}.val{font-weight:bold;}.dt{text-align:center;margin-top:6mm;color:#555;font-size:10pt;}`
-        : `@page{size:A5;margin:15mm;}body{font-family:Vazirmatn,Tahoma,sans-serif;direction:rtl;padding:10mm;}.ph{text-align:center;font-size:18pt;font-weight:bold;margin-bottom:12mm;color:#0E6E73;}.code{text-align:center;font-size:54pt;font-weight:bold;color:#0E6E73;margin:15mm 0;letter-spacing:4pt;}.row{display:flex;justify-content:space-between;margin:6mm 0;border-bottom:1px solid #ccc;padding-bottom:2mm;font-size:13pt;}.lbl{color:#555;}.val{font-weight:bold;}.dt{text-align:center;margin-top:20mm;color:#555;}`;
+        ? `@page{size:80mm auto;margin:4mm;}body{font-family:${fontFamily};direction:rtl;width:72mm;padding:4mm;font-size:11pt;}.ph{text-align:center;font-weight:700;font-size:13pt;margin-bottom:6mm;}.code{text-align:center;font-size:32pt;font-weight:700;color:#0E6E73;margin:4mm 0;letter-spacing:2pt;}.row{display:flex;justify-content:space-between;margin:2mm 0;border-bottom:1px dashed #999;padding-bottom:1mm;}.lbl{color:#555;font-size:10pt;}.val{font-weight:700;}.dt{text-align:center;margin-top:6mm;color:#555;font-size:10pt;}.toolbar{margin-top:8mm;text-align:center;}`
+        : `@page{size:A5;margin:15mm;}body{font-family:${fontFamily};direction:rtl;padding:10mm;}.ph{text-align:center;font-size:18pt;font-weight:700;margin-bottom:12mm;color:#0E6E73;}.code{text-align:center;font-size:54pt;font-weight:700;color:#0E6E73;margin:15mm 0;letter-spacing:4pt;}.row{display:flex;justify-content:space-between;margin:6mm 0;border-bottom:1px solid #ccc;padding-bottom:2mm;font-size:13pt;}.lbl{color:#555;}.val{font-weight:700;}.dt{text-align:center;margin-top:20mm;color:#555;}.toolbar{margin-top:15mm;text-align:center;}`;
+      const css2 = css + `@media print{.toolbar{display:none!important;}body{margin:0;}}`;
       const toFa = (s: any) => String(s).replace(/\d/g, (d: string) => '۰۱۲۳۴۵۶۷۸۹'[+d]);
       const esc = (s: string) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
       const win = window.open('', '_blank', 'width=700,height=900');
       if (!win) return { ok: false, error: 'popup' };
-      win.document.write(`<!DOCTYPE html><html dir="rtl" lang="fa"><head><meta charset="utf-8"><title>پرینت</title><style>${css}</style></head><body>
-        <div class="ph">${esc(data.pharmacyName)}</div>
+      const html = `<!DOCTYPE html><html dir="rtl" lang="fa"><head><meta charset="utf-8"><title>پرینت کد اشتراک</title><style>${fontCss}${css2}</style></head><body>
+        <div class="ph">${esc(data.pharmacyName || 'داروخانه')}</div>
         <div class="code">${toFa(data.code)}</div>
         <div class="row"><span class="lbl">نام و نام‌خانوادگی:</span><span class="val">${esc(data.name)}</span></div>
-        <div class="row"><span class="lbl">شماره تماس:</span><span class="val">${toFa(data.phone)}</span></div>
+        <div class="row"><span class="lbl">شماره تماس:</span><span class="val" dir="ltr">${toFa(data.phone)}</span></div>
         <div class="row"><span class="lbl">آدرس:</span><span class="val">${esc(data.address)}</span></div>
         <div class="dt">تاریخ: ${toFa(data.date)}</div>
-        <div style="margin-top:15mm;text-align:center;"><button onclick="window.print()" style="padding:8px 24px;font-family:inherit;font-size:12pt;background:#0E6E73;color:#fff;border:0;border-radius:8px;cursor:pointer;">چاپ</button></div>
-      </body></html>`);
+        <div class="toolbar"><button id="btnPrint" style="padding:10px 28px;font-family:${fontFamily};font-size:12pt;background:#0E6E73;color:#fff;border:0;border-radius:10px;cursor:pointer;">چاپ</button> <button id="btnClose" style="padding:10px 20px;font-family:${fontFamily};font-size:12pt;background:#fff;color:#4B5B62;border:1px solid #E2E8EC;border-radius:10px;cursor:pointer;">بستن</button></div>
+        <script>
+          document.getElementById('btnPrint').onclick = function(){ window.print(); };
+          document.getElementById('btnClose').onclick = function(){ window.close(); };
+        </script>
+      </body></html>`;
+      win.document.write(html);
       win.document.close();
+      try { win.focus(); } catch {}
       return { ok: true };
     } catch (e: any) {
       console.error('[webApi] print failed', e);
